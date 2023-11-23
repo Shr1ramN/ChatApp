@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #3494e6, #000000);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: background 0.5s; /* Added transition effect */
+        }
+
+        .chat-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #chat {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        #message {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #sendButton, #resetButton, #toggleButton {
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: #fff;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+
+        #sendButton:hover, #resetButton:hover, #toggleButton:hover {
+            background: linear-gradient(to right, #4a0cc6, #1990fc);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .person-1 {
+            background-color: #2196F3;
+            color: #fff;
+            text-align: left;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        .person-2 {
+            background-color: #4CAF50;
+            color: #fff;
+            text-align: right;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex">
+        <div class="chat-container">
+            <h1>Welcome to Chat App</h1>
+            <button id="toggleButton" onclick="togglePerson()">Toggle Person</button>
+            <div id="chat" class="mb-4"></div>
+            <div class="flex">
+                <input id="message" type="text" class="mr-2" placeholder="Type your message..." />
+                <button id="sendButton" onclick="sendMessage()">Send</button>
+                <button id="resetButton" onclick="resetChat()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:3000");
+        let currentPerson = "person-1";
+
+        ws.addEventListener("message", function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "message") {
+                addMessage(data.data, data.person);
+            }
+        });
+
+        function sendMessage() {
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value.trim();
+
+            if (!message) return false;
+
+            ws.send(JSON.stringify({ type: "message", data: message, person: currentPerson }));
+
+            addMessage(message, currentPerson);
+            messageInput.value = "";
+            messageInput.focus();
+        }
+
+        function resetChat() {
+            const chatContainer = document.getElementById("chat");
+            chatContainer.innerHTML = ""; // Clear chat history
+        }
+
+        function addMessage(message, person) {
+            const chatContainer = document.getElementById("chat");
+
+            const node = document.createElement("div");
+            node.innerHTML = `<p class="${person}">${message}</p>`;
+            chatContainer.appendChild(node);
+
+            // Scroll to the bottom of the chat container
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function togglePerson() {
+            currentPerson = currentPerson === "person-1" ? "person-2" : "person-1";
+            document.body.style.background = currentPerson === "person-1" ? "#3494e6" : "#4CAF50";
+        }
+    </script>
+</body>
+</html>
